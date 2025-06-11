@@ -1,0 +1,25 @@
+﻿using UnityEngine;
+using System.Collections;
+
+public enum SubMenuNames  {
+	SETTING_MENU,
+	CAR_UNLOCK_POPUP,
+	CAR_UPGRADE_POPUP,
+	OUT_OF_CASH,
+	ENV_UNLOCK_POPUP,
+	LOADING,
+	CONGRATS_POPUP,
+	FREE_GOLD_POPUP,
+	LEVEL_UP,
+	LEVEL_UNLOCK_POPUP,
+	NO_VIDEO_POPUP,
+    SECODORY_GUN_SELECTION,
+    EXIT,
+    CONGRATS_POPUP_ForGun,
+    STOREPANEL,
+    STORECONGRATS,
+    GUN_WARNING,
+    MEGA_OFFER_MENU,
+	WeeklyReward,
+	SpinScreen
+}
