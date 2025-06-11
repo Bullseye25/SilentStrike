@@ -1,4 +1,5 @@
 using Newtonsoft.Json;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -49,10 +50,17 @@ public class LeaderboardManager : MonoBehaviour
     // Callback from networkManager
     public void CallbackGetLeaderboard(string jsonData)
     {
-        LeaderDetails[] leaderboardData = JsonConvert.DeserializeObject<LeaderDetails[]>(jsonData);
+        StartCoroutine(HandleLeaderboard(jsonData));
+    }
 
-        var length = leaderboardData.Length;
+    private IEnumerator HandleLeaderboard(string jsonData)
+    {
+        LeaderDetails[] leaderboardData = JsonConvert.DeserializeObject<LeaderDetails[]>(jsonData);
+        int length = leaderboardData.Length;
         Debug.Log("Received leaderboard: " + length);
+
+        // 0.5 second delay
+        yield return new WaitForSeconds(0.5f);
 
         #region Clear previous entries
         foreach (Transform child in content)
@@ -67,7 +75,6 @@ public class LeaderboardManager : MonoBehaviour
         #region Create entries
         List<Transform> children = new List<Transform>();
 
-        // Populate new leaderboard entries
         for (int i = 0; i < length; i++)
         {
             GameObject entryObject = Instantiate(entryPrefab, content);
@@ -87,7 +94,6 @@ public class LeaderboardManager : MonoBehaviour
             })
             .ToList();
 
-        // Reorder in hierarchy
         for (int i = 0; i < children.Count; i++)
         {
             children[i].SetSiblingIndex(i);
@@ -95,4 +101,5 @@ public class LeaderboardManager : MonoBehaviour
         }
         #endregion
     }
+
 }

@@ -12,7 +12,7 @@ using TMPro;
 public class NetworkManager : MonoBehaviour
 {
     public static NetworkManager instance;
-    const string serverURL = "https://minigame-backend-private-drab.vercel.app";
+    const string serverURL = "https://minigame-backend-new.vercel.app/";
     private string token = "No Token";
     public string walletId = "No Wallet";
     public string userName = "Guest";
@@ -190,32 +190,41 @@ public class NetworkManager : MonoBehaviour
         StartCoroutine(SetLeaderboard(score));
     }
 
-    private IEnumerator SetLeaderboard(int score, bool isCheater = false)
+    private IEnumerator SetLeaderboard(int _score, bool _isCheater = false)
     {
         string[] challengeData = GenerateChallenge(game);
 
-        WWWForm form = new WWWForm();
-        form.AddField("walletId", walletId);
-        form.AddField("userName", userName);
-        form.AddField("score", score.ToString());
-        form.AddField("isCheater", isCheater.ToString());
-        form.AddField("token", token);
-        form.AddField("game", game);
-        form.AddField("challenge", challengeData[0]);
-        form.AddField("iv", challengeData[1]);
-
-        using (UnityWebRequest www = UnityWebRequest.Post(serverURL + "/leaderboard/SetLeaderboard", form))
+        // Create the JSON body
+        var jsonBody = new
         {
-            yield return www.SendWebRequest();
+            walletId = walletId,
+            userName = userName,
+            score = _score.ToString(),
+            isCheater = _isCheater.ToString(),
+            token = token,
+            game = game,
+            challenge = challengeData[0],
+            iv = challengeData[1]
+        };
 
-            if (www.result != UnityWebRequest.Result.Success)
-            {
-                Debug.Log("Error updating score: " + www.error);
-            }
-            else
-            {
-                Debug.Log($"Score updated successfully {score}");
-            }
+        string bodyString = JsonUtility.ToJson(jsonBody);
+
+        // Create the request
+        UnityWebRequest request = new UnityWebRequest(serverURL + "/leaderboard/SetLeaderboard", "POST");
+        byte[] bodyRaw = Encoding.UTF8.GetBytes(bodyString);
+        request.uploadHandler = new UploadHandlerRaw(bodyRaw);
+        request.downloadHandler = new DownloadHandlerBuffer();
+        request.SetRequestHeader("Content-Type", "application/json");
+
+        yield return request.SendWebRequest();
+
+        if (request.result != UnityWebRequest.Result.Success)
+        {
+            Debug.LogError("Error updating _score: " + request.error);
+        }
+        else
+        {
+            Debug.Log($"Score updated successfully: {_score}");
         }
     }
 
@@ -337,7 +346,7 @@ public class NetworkManager : MonoBehaviour
         
         if (token == "No Token")
         {
-            Debug.Log("No token found, cannot update score");
+            Debug.Log("No token found, cannot update _score");
             yield break;
         }
 
