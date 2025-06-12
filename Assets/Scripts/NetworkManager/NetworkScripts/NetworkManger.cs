@@ -194,37 +194,27 @@ public class NetworkManager : MonoBehaviour
     {
         string[] challengeData = GenerateChallenge(game);
 
-        // Create the JSON body
-        var jsonBody = new
+        WWWForm form = new WWWForm();
+        form.AddField("walletId", walletId);
+        form.AddField("userName", userName);
+        form.AddField("game", game);
+        form.AddField("score", score.ToString());
+        form.AddField("isCheater", isCheater.ToString());
+        form.AddField("challenge", challengeData[0]);
+        form.AddField("iv", challengeData[1]);
+
+        using (UnityWebRequest www = UnityWebRequest.Post(serverURL + "/leaderboard/SetLeaderboard", form))
         {
-            walletId = walletId,
-            userName = userName,
-            score = _score.ToString(),
-            isCheater = _isCheater.ToString(),
-            token = token,
-            game = game,
-            challenge = challengeData[0],
-            iv = challengeData[1]
-        };
+            yield return www.SendWebRequest();
 
-        string bodyString = JsonUtility.ToJson(jsonBody);
-
-        // Create the request
-        UnityWebRequest request = new UnityWebRequest(serverURL + "/leaderboard/SetLeaderboard", "POST");
-        byte[] bodyRaw = Encoding.UTF8.GetBytes(bodyString);
-        request.uploadHandler = new UploadHandlerRaw(bodyRaw);
-        request.downloadHandler = new DownloadHandlerBuffer();
-        request.SetRequestHeader("Content-Type", "application/json");
-
-        yield return request.SendWebRequest();
-
-        if (request.result != UnityWebRequest.Result.Success)
-        {
-            Debug.LogError("Error updating _score: " + request.error);
-        }
-        else
-        {
-            Debug.Log($"Score updated successfully: {_score}");
+            if (www.result != UnityWebRequest.Result.Success)
+            {
+                Debug.Log("Error updating score: " + www.error);
+            }
+            else
+            {
+                Debug.Log("Score updated successfully");
+            }
         }
     }
 
