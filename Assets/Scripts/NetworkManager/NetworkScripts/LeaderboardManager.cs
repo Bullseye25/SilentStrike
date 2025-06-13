@@ -28,13 +28,13 @@ public class LeaderboardManager : MonoBehaviour
     public void HideLeaderboard()
     {
         leaderboardScreen.SetActive(false);
-        this.enabled = false;  
+        this.enabled = false;
     }
 
     public void ShowLeaderboard()
     {
         Debug.Log("Opening Leaderboard");
-        this.enabled = true;  
+        this.enabled = true;
         leaderboardScreen.SetActive(true);
         loadingCircle.SetActive(true);
 
@@ -44,19 +44,27 @@ public class LeaderboardManager : MonoBehaviour
             return;
         }
 
-        StartCoroutine(NetworkManager.instance.GetLeaderboard(CallbackGetLeaderboard));
+        StartCoroutine(FetchAndDisplayLeaderboard());
     }
 
-    // Callback from networkManager
-    public void CallbackGetLeaderboard(string jsonData)
+    private IEnumerator FetchAndDisplayLeaderboard()
     {
-        StartCoroutine(HandleLeaderboard(jsonData));
+        yield return StartCoroutine(NetworkManager.instance.GetLeaderboard());
+
+        string jsonData = NetworkManager.instance.leaderboardJson;
+        if (string.IsNullOrEmpty(jsonData))
+        {
+            Debug.LogError("Leaderboard JSON is empty or null");
+            loadingCircle.SetActive(false);
+            yield break;
+        }
+
+        yield return StartCoroutine(HandleLeaderboard(jsonData));
     }
 
     [ContextMenu("Create 25 Leaderboard Slots")]
     private void CreateLeaderboardSlots()
     {
-        // Delete old ones first (optional for safe re-run)
         foreach (Transform child in content)
         {
             if (child.gameObject != loadingCircle)
@@ -67,8 +75,8 @@ public class LeaderboardManager : MonoBehaviour
         {
             GameObject entryObject = Instantiate(entryPrefab, content);
             entryObject.name = "LeaderboardSlot_" + (i + 1);
-            entryObject.GetComponent<LeaderBoardSlotAccess>().Clear(); // Optional: reset values
-            entryObject.SetActive(false); // Initially inactive
+            entryObject.GetComponent<LeaderBoardSlotAccess>().Clear();
+            entryObject.SetActive(false);
         }
 
         Debug.Log("Created 25 leaderboard slots.");
@@ -129,5 +137,4 @@ public class LeaderboardManager : MonoBehaviour
             children[j].GetComponent<LeaderBoardSlotAccess>().textRank.text = (j + 1).ToString();
         }
     }
-
 }

@@ -229,6 +229,32 @@ public class NetworkManager : MonoBehaviour
         }
     }
 
+    public string leaderboardJson { get; private set; } = null;
+
+
+    public IEnumerator GetLeaderboard()
+    {
+        Debug.Log("Getting leaderboard...");
+        var url = serverURL + "leaderboard/GetLeaderboard" + "?game=" + game;
+
+        using (UnityWebRequest www = UnityWebRequest.Get(url))
+        {
+            yield return www.SendWebRequest();
+
+            if (www.result != UnityWebRequest.Result.Success)
+            {
+                Debug.LogError("Error retrieving leaderboard: " + www.error);
+                leaderboardJson = null; // or set error message if needed
+            }
+            else
+            {
+                leaderboardJson = www.downloadHandler.text;
+                Debug.Log("Leaderboard retrieved successfully");
+            }
+        }
+    }
+
+
 
     public IEnumerator GetLeaderboard(Action<String> callback)
     {
@@ -247,7 +273,6 @@ public class NetworkManager : MonoBehaviour
             {
                 string jsonData = www.downloadHandler.text;
                 Debug.Log("Leaderboard retrieved successfully");
-                yield return new WaitForSeconds(0.5f);
                 callback(jsonData);
             }
         }
