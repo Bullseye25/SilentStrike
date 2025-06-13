@@ -8,7 +8,7 @@ public class LeaderBoardSlotAccess : MonoBehaviour
     public Text textRank;
     public void SetEntry(LeaderDetails userinfo)
     {
-        textName.text = userinfo.TruncateUsername(userinfo.Username);
+        textName.text = userinfo.Username;
         textScore.text = userinfo.Score.ToString();
         textRank.text = "0";
     }
@@ -28,9 +28,18 @@ public class LeaderDetails
     public string Game;
     public string Username;
     public int Score;
+    // public string privyID;
+    // public int reward;
+    // public bool isCheater;
 
     // Optional but good practice
-    public LeaderDetails() { }
+    // public LeaderDetails(string WalletID, string Game, string Username, int Score)
+    // {
+    //     this.WalletID = WalletID;
+    //     this.Game = Game;
+    //     this.Username = TruncateUsername(Username);
+    //     this.Score = Score;
+    // }
 
     public string TruncateUsername(string username)
     {
