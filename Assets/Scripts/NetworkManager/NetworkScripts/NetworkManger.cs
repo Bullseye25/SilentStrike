@@ -13,9 +13,9 @@ public class NetworkManager : MonoBehaviour
 {
     public static NetworkManager instance;
     const string serverURL = "https://minigame-backend-new.vercel.app/";
-    private string token = "No Token";
-    public string walletId = "No Wallet";
-    public string userName = "Guest";
+    public string token;
+    public string walletId;
+    public string userName;
     public string game; // kishuInu
 
     private void Reset()
@@ -173,6 +173,8 @@ public class NetworkManager : MonoBehaviour
         string[] challengeData = GenerateChallenge(game);
         string decryptedData = DecryptChallenge(challengeData[0], challengeData[1]);
 
+        Debug.Log($"0: {challengeData[0]}, 1: {challengeData[1]}");
+
         if (decryptedData == game)
         {
             Debug.Log("Encryption and decryption successful");
@@ -190,37 +192,36 @@ public class NetworkManager : MonoBehaviour
         StartCoroutine(SetLeaderboard(score));
     }
 
+
+    [ContextMenu("LoadScore")]
+    public void UpdateScoreOnLeaderBoard()
+    {
+        StartCoroutine(SetLeaderboard(14));
+    }
+
     private IEnumerator SetLeaderboard(int _score, bool _isCheater = false)
     {
         string[] challengeData = GenerateChallenge(game);
 
-        // Create the JSON body
-        var jsonBody = new
-        {
-            walletId = walletId,
-            userName = userName,
-            score = _score.ToString(),
-            isCheater = _isCheater.ToString(),
-            token = token,
-            game = game,
-            challenge = challengeData[0],
-            iv = challengeData[1]
-        };
+        WWWForm form = new WWWForm();
+        form.AddField("walletId", walletId);
+        form.AddField("userName", userName);
+        form.AddField("score", _score.ToString());
+        form.AddField("isCheater", _isCheater.ToString());
+        form.AddField("token", token);
+        form.AddField("game", game);
+        form.AddField("challenge", challengeData[0]);
+        form.AddField("iv", challengeData[1]);
 
-        string bodyString = JsonUtility.ToJson(jsonBody);
+        var url = serverURL+ "leaderboard/SetLeaderboard";
 
-        // Create the request
-        UnityWebRequest request = new UnityWebRequest(serverURL + "/leaderboard/SetLeaderboard", "POST");
-        byte[] bodyRaw = Encoding.UTF8.GetBytes(bodyString);
-        request.uploadHandler = new UploadHandlerRaw(bodyRaw);
-        request.downloadHandler = new DownloadHandlerBuffer();
-        request.SetRequestHeader("Content-Type", "application/json");
+        UnityWebRequest request = UnityWebRequest.Post(url, form);
 
         yield return request.SendWebRequest();
 
         if (request.result != UnityWebRequest.Result.Success)
         {
-            Debug.LogError("Error updating _score: " + request.error);
+            Debug.LogError("Error updating score: " + request.error);
         }
         else
         {
@@ -228,10 +229,13 @@ public class NetworkManager : MonoBehaviour
         }
     }
 
+
     public IEnumerator GetLeaderboard(Action<String> callback)
     {
         Debug.Log("Getting leaderboard...");
-        using (UnityWebRequest www = UnityWebRequest.Get(serverURL + "/leaderboard/GetLeaderboard" + "?game=" + game))
+        var url = serverURL + "leaderboard/GetLeaderboard" + "?game=" + game;
+
+        using (UnityWebRequest www = UnityWebRequest.Get(url))
         {
             yield return www.SendWebRequest();
 
@@ -243,6 +247,7 @@ public class NetworkManager : MonoBehaviour
             {
                 string jsonData = www.downloadHandler.text;
                 Debug.Log("Leaderboard retrieved successfully");
+                yield return new WaitForSeconds(0.5f);
                 callback(jsonData);
             }
         }

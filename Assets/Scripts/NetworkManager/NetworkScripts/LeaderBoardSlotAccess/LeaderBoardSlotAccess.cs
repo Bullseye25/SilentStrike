@@ -6,28 +6,31 @@ public class LeaderBoardSlotAccess : MonoBehaviour
     public Text textName;
     public Text textScore;
     public Text textRank;
-   /* public GameObject[] rankIcons;*/
-
     public void SetEntry(LeaderDetails userinfo)
     {
         textName.text = userinfo.TruncateUsername(userinfo.Username);
         textScore.text = userinfo.Score.ToString();
         textRank.text = "0";
-/*        foreach (var icon in rankIcons)
-        {
-            icon.SetActive(false);
-        }*/
+    }
+
+    public void Clear()
+    {
+        textName.text = "";
+        textScore.text = "";
+        textRank.text = "";
     }
 }
 
-
-[SerializeField]
+[System.Serializable]
 public class LeaderDetails
 {
     public string WalletID;
     public string Game;
     public string Username;
     public int Score;
+
+    // Optional but good practice
+    public LeaderDetails() { }
 
     public string TruncateUsername(string username)
     {
@@ -38,4 +41,10 @@ public class LeaderDetails
         string lastFour = username.Substring(username.Length - 5, 5);
         return firstFour + "..." + lastFour;
     }
+}
+
+[System.Serializable]
+public class LeaderboardWrapper
+{
+    public LeaderDetails[] leaderboard;
 }

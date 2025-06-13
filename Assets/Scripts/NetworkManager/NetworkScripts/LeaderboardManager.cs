@@ -53,53 +53,81 @@ public class LeaderboardManager : MonoBehaviour
         StartCoroutine(HandleLeaderboard(jsonData));
     }
 
+    [ContextMenu("Create 25 Leaderboard Slots")]
+    private void CreateLeaderboardSlots()
+    {
+        // Delete old ones first (optional for safe re-run)
+        foreach (Transform child in content)
+        {
+            if (child.gameObject != loadingCircle)
+                DestroyImmediate(child.gameObject);
+        }
+
+        for (int i = 0; i < 25; i++)
+        {
+            GameObject entryObject = Instantiate(entryPrefab, content);
+            entryObject.name = "LeaderboardSlot_" + (i + 1);
+            entryObject.GetComponent<LeaderBoardSlotAccess>().Clear(); // Optional: reset values
+            entryObject.SetActive(false); // Initially inactive
+        }
+
+        Debug.Log("Created 25 leaderboard slots.");
+    }
+
     private IEnumerator HandleLeaderboard(string jsonData)
     {
-        LeaderDetails[] leaderboardData = JsonConvert.DeserializeObject<LeaderDetails[]>(jsonData);
+        // Wrap raw array in a dummy root object
+        jsonData = "{\"leaderboard\":" + jsonData + "}";
+
+        // Parse using Unity's JsonUtility
+        LeaderboardWrapper wrapper = JsonUtility.FromJson<LeaderboardWrapper>(jsonData);
+        LeaderDetails[] leaderboardData = wrapper.leaderboard;
+
         int length = leaderboardData.Length;
         Debug.Log("Received leaderboard: " + length);
 
-        // 0.5 second delay
+        loadingCircle.SetActive(false);
         yield return new WaitForSeconds(0.5f);
 
-        #region Clear previous entries
+        List<Transform> children = new List<Transform>();
+        int i = 0;
+
         foreach (Transform child in content)
         {
             if (child.gameObject == loadingCircle) continue;
-            Destroy(child.gameObject);
+
+            if (i < leaderboardData.Length)
+            {
+                child.gameObject.SetActive(true);
+                var entryUI = child.GetComponent<LeaderBoardSlotAccess>();
+                entryUI.SetEntry(leaderboardData[i]);
+                children.Add(child);
+            }
+            else
+            {
+                child.gameObject.SetActive(false);
+            }
+
+            i++;
+            if (i >= 22) break;
         }
-        #endregion
 
-        loadingCircle.SetActive(false);
+        yield return new WaitForSeconds(0.5f);
 
-        #region Create entries
-        List<Transform> children = new List<Transform>();
-
-        for (int i = 0; i < length; i++)
-        {
-            GameObject entryObject = Instantiate(entryPrefab, content);
-            LeaderBoardSlotAccess entryUI = entryObject.GetComponent<LeaderBoardSlotAccess>();
-            entryUI.SetEntry(leaderboardData[i]);
-            children.Add(entryObject.transform);
-        }
-        #endregion
-
-        #region Sort
+        // Sort entries by Score descending
         children = children
             .OrderByDescending(child =>
             {
                 var details = child.GetComponent<LeaderBoardSlotAccess>();
-                int score;
-                return int.TryParse(details.textScore.text, out score) ? score : int.MinValue;
+                return int.TryParse(details.textScore.text, out int score) ? score : int.MinValue;
             })
             .ToList();
 
-        for (int i = 0; i < children.Count; i++)
+        for (int j = 0; j < children.Count; j++)
         {
-            children[i].SetSiblingIndex(i);
-            children[i].GetComponent<LeaderBoardSlotAccess>().textRank.text = (i + 1).ToString();
+            children[j].SetSiblingIndex(j);
+            children[j].GetComponent<LeaderBoardSlotAccess>().textRank.text = (j + 1).ToString();
         }
-        #endregion
     }
 
 }
